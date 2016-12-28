@@ -1,17 +1,5 @@
-#include <algorithm>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <iomanip>
-#include <iostream>
-#include <list>
-#include <map>
-#include <queue>
-#include <set>
-#include <sstream>
-#include <stack>
-#include <string>
-#include <vector>
+#include <bits/stdc++.h>
+#include <unistd.h>
 
 using namespace std;
 typedef pair<int,int> ii;
@@ -36,7 +24,7 @@ typedef vector<ii> vii;
 #define MM(arr, num) memset((arr), (num), sizeof((arr)))
 #define DEB(x) cerr << ">>> " << (#x) << " -> " << (x) << endl;
 #define DEBA(x,n) cerr << (#x) << " "; deba((x),(n));
-void deba(int * a, int n){ cerr << "| "; REP(i,n) cerr << a[i] << " "; cerr << "|" << endl;}
+void deba(double * a, int n){ cerr << "| "; REP(i,n) cerr << a[i] << " "; cerr << "|" << endl;}
 
 
 inline bool EQ(double a, double b) { return fabs(a-b) < 1e-9; }
@@ -49,6 +37,12 @@ typedef unsigned long long ull;
 const int M = 2600000;
 const int N = 200000;
 
+//const char FILE_A[] = "mat_cct_7650.txt";
+//const char FILE_B[] = "prava_str_cct_7650.txt";
+
+//const char FILE_A[] = "mat_ps_8200.txt";
+//const char FILE_B[] = "prava_str_ps_8200.txt";
+
 const char FILE_A[] = "smallA.txt";
 const char FILE_B[] = "smallB.txt";
 
@@ -59,8 +53,8 @@ const char FILE_B[] = "smallB.txt";
 int n,m;
 
 
-int l[M];
-int r[M];
+int row[M];
+int col[M];
 double b[N];
 double sol[N];
 double val[M];
@@ -68,13 +62,16 @@ double val[M];
 double x[2][N]; //todo try [N][2]
 double r[2][N];
 
+double ark[N];
+
 const int N2D = 9000;
 double mat[N2D][N2D];
 
 void fill_in_2D(){
     if(n > N2D) { cout << "To big matrix" << endl; return; }
     REP(i,n)REP(j,n) mat[i][j] = 0;
-    REP(i, m) mat[l[i]][r[i]] = val[i];
+    REP(i, m) { mat[row[i]][col[i]] = val[i]; }
+    cout << "ok " << endl;
 }
 
 void gauss(){
@@ -91,7 +88,7 @@ void gauss(){
     }
 
     REP(i,n){ REP(j,n) cout << mat[i][j] << " "; cout << endl; }
-    REP(i,n) cout << b[i] << " "; cout << endl;
+    REP(i,n) cout << b[i] << "-"; cout << endl;
 
     FORD(i,n-1,0){
         double v = b[i];
@@ -105,27 +102,103 @@ void gauss(){
 }
 
 
-void pv( int [] v, int num){
-    REP(i,num) cout << v[i] << " "; cout << endl;
+
+
+
+inline void get_random_vec( double * r){
+    REP(i,n) r[i] = rand() / (double)RAND_MAX;
+    DEBA(r,n);
 }
 
-
-inline void get_random_x(){
-    REP(i,n) x[i] = rand() / (double)RAND_MAX;
-    pv(x,n);
+inline void vec_sub( double * r, double * a, double * b ){
+    REP(i,n) r[i] = a[i] - b[i];
+}
+inline void vec_add( double * r, double * a, double * b ){
+    REP(i,n) r[i] = a[i] + b[i];
 }
 
+// a + c * b  -> c is const
+inline void vec_add_mul( double * r, double * a, double * b, double alpha_b ){
+    REP(i,n) r[i] = a[i] + alpha_b * b[i];
+}
+// a - c * b  -> c is const
+inline void vec_sub_mul( double * r, double * a, double * b, double alpha_b ){
+    REP(i,n) r[i] = a[i] - alpha_b * b[i];
+}
+
+inline void mat_vec_mul(  double * r, double * b){
+    REP(i,n){
+        r[i] = 0;
+        REP(j,n) r[i] += mat[i][j] * b[j];
+    }
+}
+inline double vec_mul( double * a, double * b ){
+    double ret = 0;
+    REP(i,n) ret += a[i] * b[i];
+    return ret;
+}
+
+inline double vec_size(double * a){
+    double ret = 0;
+    REP(i,n) ret+= a[i]*a[i];
+    return sqrt(ret);
+}
 
 
 void descent_2D(){
 
     fill_in_2D();
+    get_random_vec( x[0] );
+    //x[0][0] = 0;
+    //x[0][1] = 1;
+
+    mat_vec_mul( r[0] , x[0] ); //r[0] is Ax0 here.
+
+    //DEBA(r[0],n);
+   // DEBA(b,n);
+
+    vec_sub(  r[0],  b,  r[0] );
+
+    //DEBA(r[0],n);
+
+    int k = 0, k1 = 1;
+    double alpha, rk_rk, rk_ark;
+
+    while(1){
+
+        mat_vec_mul( ark, r[k] );
+
+        //DEBA(ark,n)
+        //DEBA(r[k],n)
+
+        rk_rk = vec_mul( r[k], r[k] );
+        rk_ark = vec_mul( r[k], ark );
+        if(rk_ark == 0){ cout << "Zero division" << endl;  exit(0);}
+        alpha =  rk_rk / rk_ark;
+
+        //DEB(alpha)
+
+        vec_add_mul( x[k1], x[k], r[k], alpha );
+
+        //DEBA(x[k1],n)
+
+        vec_sub_mul( r[k1], r[k], ark,  alpha );
+
+        DEB( vec_size(r[k1] ) );
+
+        if( vec_size(r[k1] ) < 0.1 ) { break; }
 
 
 
+        k  ^= 0;
+        k1 ^= 1;
+    }
 
+    DEBA( x[k1] ,n );
+    mat_vec_mul( x[k], x[k1] );
+    vec_sub( r[0], b, x[k] );
 
-
+    cout << "error: " <<  vec_size(r[0]) << endl;
 
 }
 
@@ -138,9 +211,12 @@ int main() {
   FILE * fa = fopen(FILE_A,"r+");
   FILE * fb = fopen(FILE_B,"r+");
 
+  if(fa == NULL ) cout << "wrong file a" << endl;
+  if(fb == NULL ) cout << "wrong file b" << endl;
+
   fscanf(fa,"%d%d", &n,&m);
   REP(i,m){
-    fscanf(fa,"%d %d %lf", &l[i], &r[i], &val[i] );
+    fscanf(fa,"%d %d %lf", &row[i], &col[i], &val[i] );
   }
   int n2; fscanf(fb,"%d", &n2);
   if(n2 != n) {cout << "chyba" << endl; return 1;}
@@ -149,7 +225,9 @@ int main() {
     fscanf(fb,"%lf", &b[i]);
   }
 
-  gauss();
+  //gauss();
+  cout << "------" << endl;
+  descent_2D();
 
 
   return 0;
