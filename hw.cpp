@@ -48,11 +48,11 @@ const int N = 200000;
 //const char FILE_A[] = "mat_ps_8200.txt";
 //const char FILE_B[] = "prava_str_ps_8200.txt";
 
-const char FILE_A[] = "mat_cct_120600.txt";
-const char FILE_B[] = "prava_str_cct_120600.txt";
+//const char FILE_A[] = "mat_cct_120600.txt";
+//const char FILE_B[] = "prava_str_cct_120600.txt";
 
-//const char FILE_A[] = "mat_ps_128800.txt";
-//const char FILE_B[] = "prava_str_ps_128800.txt";
+const char FILE_A[] = "mat_ps_128800.txt";
+const char FILE_B[] = "prava_str_ps_128800.txt";
 
 //const char FILE_A[] = "smallA.txt";
 //const char FILE_B[] = "smallB.txt";
@@ -244,12 +244,13 @@ void gradient(){
 
     int k = 0, k1 = 1;
     double alpha, beta, rk1_rk1, rk_rk, sk_ask;
+    rk_rk = vec_mul( r[k], r[k] );
 
     while(1){
 
         mat_vec_mul( ark, s[k] );  // ark is here ask
 
-        rk_rk = vec_mul( r[k], r[k] );
+
         sk_ask = vec_mul( s[k], ark );
         if(sk_ask == 0){ cout << "Zero division" << endl;  break;}
         alpha =  rk_rk / sk_ask;
@@ -269,6 +270,7 @@ void gradient(){
         vec_add_mul( s[k1], r[k1], s[k], beta );
         /* */
 
+        rk_rk = rk1_rk1;
         k  ^= 1;
         k1 ^= 1;
     }
