@@ -24,6 +24,7 @@ typedef vector<ii> vii;
 #define MM(arr, num) memset((arr), (num), sizeof((arr)))
 #define DEB(x) cerr << ">>> " << (#x) << " -> " << (x) << endl;
 #define DEBA(x,n) cerr << (#x) << " "; deba((x),(n));
+//#define double float
 void deba( double * a, int n){ cerr << "| "; REP(i,n) cerr << a[i] << " "; cerr << "|" << endl;}
 
 
@@ -32,15 +33,15 @@ inline bool EQ(double a, double b) { return fabs(a-b) < 1e-9; }
 const int INF = 1<<30;
 typedef long long ll;
 typedef unsigned long long ull;
-//#define double long double
+
 /*******************************************************/
 
 const double EPS = 1e-8;
 
-const bool FULL = false;
+const bool FULL = false; //TODO change to DEFINE
 
-const int M = 2600000;
-const int N = 200000;
+//const int M = 251900;
+//const int N = 128900;
 
 //const char FILE_A[] = "mat_cct_7650.txt";
 //const char FILE_B[] = "prava_str_cct_7650.txt";
@@ -64,6 +65,9 @@ const char FILE_B[] = "prava_str_ps_128800.txt";
 int n,m;
 
 
+int * row, *col;
+double * b, *sol, *val, *x[2], *r[2], *s[2], *ark;
+/*
 int row[M];
 int col[M];
 double b[N];
@@ -73,12 +77,14 @@ double val[M];
 
 double x[2][N]; //todo try [N][2]
 double r[2][N];
-double s[2][N];
+double s[2][N];*/
 
-double ark[N];
-
+//double ark[N];
+/*
+#ifdef MATRIX_3D
 const int N2D = 9000;
 double mat[N2D][N2D];
+#endif*/
 
 void fill_in_2D(){
     if(n > N2D) { cout << "To big matrix" << endl; return; }
@@ -166,9 +172,6 @@ inline double vec_size(double * a){
 inline double copy_vec( double * to, double * from){
     REP(i,n) to[i] = from[i];
 }
-
-
-
 
 void descent(){
 
@@ -286,6 +289,23 @@ void gradient(){
 }
 
 
+void init_arrays(int N, int M){
+
+    row = new int[M];
+    col = new int[M];
+    b = new double[N];
+    sol = new double[N];
+    val = new double[M];
+
+    REP(i,2){
+        x[i] = new double[N];
+        r[i] = new double[N];
+        s[i] = new double[N];
+    }
+    ark = new double[N];
+
+}
+
 
 int main() {
 
@@ -295,10 +315,15 @@ int main() {
   FILE * fa = fopen(FILE_A,"r+");
   FILE * fb = fopen(FILE_B,"r+");
 
+
+
   if(fa == NULL ) cout << "wrong file a" << endl;
   if(fb == NULL ) cout << "wrong file b" << endl;
 
   fscanf(fa,"%d%d", &n,&m);
+  init_arrays(n,m);
+
+
   REP(i,m){
     fscanf(fa,"%d %d %lf", &row[i], &col[i], &val[i] );
   }
