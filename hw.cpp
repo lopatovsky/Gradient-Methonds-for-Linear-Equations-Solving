@@ -1,3 +1,12 @@
+/**
+compile:
+mode with compressed rows
+g++ -O3 hw.cpp
+mode with full matrix
+g++ -O3 hw.cpp -D MATRIX_2D
+debug mode add
+-D DEBUG
+*/
 #include <bits/stdc++.h>
 #include <unistd.h>
 
@@ -38,11 +47,6 @@ typedef unsigned long long ull;
 
 const double EPS = 1e-8;
 
-const bool FULL = false; //TODO change to DEFINE
-
-//const int M = 251900;
-//const int N = 128900;
-
 //const char FILE_A[] = "mat_cct_7650.txt";
 //const char FILE_B[] = "prava_str_cct_7650.txt";
 
@@ -52,11 +56,11 @@ const bool FULL = false; //TODO change to DEFINE
 //const char FILE_A[] = "mat_cct_120600.txt";
 //const char FILE_B[] = "prava_str_cct_120600.txt";
 
-const char FILE_A[] = "mat_ps_128800.txt";
-const char FILE_B[] = "prava_str_ps_128800.txt";
+//const char FILE_A[] = "mat_ps_128800.txt";
+//const char FILE_B[] = "prava_str_ps_128800.txt";
 
-//const char FILE_A[] = "smallA.txt";
-//const char FILE_B[] = "smallB.txt";
+const char FILE_A[] = "smallA.txt";
+const char FILE_B[] = "smallB.txt";
 
 //const char FILE_A[] = "A.txt";
 //const char FILE_B[] = "B.txt";
@@ -67,24 +71,11 @@ int n,m;
 
 int * row, *col;
 double * b, *sol, *val, *x[2], *r[2], *s[2], *ark;
-/*
-int row[M];
-int col[M];
-double b[N];
-double sol[N];
-double val[M];
-//double test[] = {0,1,0};
 
-double x[2][N]; //todo try [N][2]
-double r[2][N];
-double s[2][N];*/
-
-//double ark[N];
-/*
-#ifdef MATRIX_3D
+#ifdef MATRIX_2D
 const int N2D = 9000;
 double mat[N2D][N2D];
-#endif*/
+
 
 void fill_in_2D(){
     if(n > N2D) { cout << "To big matrix" << endl; return; }
@@ -92,7 +83,13 @@ void fill_in_2D(){
     REP(i, m) { mat[row[i]][col[i]] = mat[col[i]][row[i]] = val[i]; }
 }
 
+#endif
+
 void gauss(){
+
+    #ifndef MATRIX_2D
+    cout << "The gauss is supported only in 2D mode." << endl;
+    #else
 
     fill_in_2D();
 
@@ -116,6 +113,7 @@ void gauss(){
 
     REP(i,n) cout << sol[i] << " "; cout << endl;
 
+    #endif
 
 }
 
@@ -139,22 +137,18 @@ inline void vec_sub_mul( double * r, double * a, double * b, double alpha_b ){
     REP(i,n) r[i] = a[i] - alpha_b * b[i];
 }
 
-inline void mat_vec_mul_cr( double * r, double * b){
-    REP(i,n) r[i] = 0;
-    REP(i,m){
-        r[ row[i] ] += val[i] * b[ col[i] ];
-    }
-}
-inline void mat_vec_mul_full(  double * r, double * b){
+inline void mat_vec_mul(  double * r, double * b){
+    #ifdef MATRIX_2D
     REP(i,n){
         r[i] = 0;
         REP(j,n) r[i] += mat[i][j] * b[j];
     }
-}
-
-inline void mat_vec_mul(  double * r, double * b){
-    if (FULL) mat_vec_mul_full(r,b);
-    else mat_vec_mul_cr(r,b);
+    #else
+    REP(i,n) r[i] = 0;
+    REP(i,m){
+        r[ row[i] ] += val[i] * b[ col[i] ];
+    }
+    #endif
 }
 
 inline double vec_mul( double * a, double * b ){
@@ -240,6 +234,7 @@ void gradient(){
     get_random_vec( x[0] );
 
     mat_vec_mul( r[0] , x[0] ); //r[0] is Ax0 here.
+
     vec_sub(  r[0],  b,  r[0] );
     copy_vec( s[0], r[0] );
 
@@ -261,7 +256,9 @@ void gradient(){
         vec_add_mul( x[k1], x[k], s[k], alpha );
         vec_sub_mul( r[k1], r[k], ark,  alpha );
 
+        #ifdef DEBUG
         DEB( vec_size(r[k1] ) );
+        #endif
 
         if( vec_size(r[k1] ) < EPS ) { break; }
         /*new part*/
@@ -278,13 +275,14 @@ void gradient(){
         k1 ^= 1;
     }
 
-
+    #ifdef DEBUG
     DEBA( x[k1] ,n );
     mat_vec_mul( x[k], x[k1] );
     vec_sub( r[0], b, x[k] );
 
-    cout << "error: " <<  vec_size(r[0]) << endl;
 
+    cout << "error: " <<  vec_size(r[0]) << endl;
+    #endif
 
 }
 
@@ -323,22 +321,27 @@ int main() {
   fscanf(fa,"%d%d", &n,&m);
   init_arrays(n,m);
 
-
   REP(i,m){
     fscanf(fa,"%d %d %lf", &row[i], &col[i], &val[i] );
   }
+
+  #ifdef DEBUG
+  DEB( n );
+  #endif
+
   int n2; fscanf(fb,"%d", &n2);
-  if(n2 != n) {cout << "chyba" << endl; return 1;}
+  if(n2 != n) {cout << "error" << endl; return 1;}
 
   REP(i,n){
     fscanf(fb,"%lf", &b[i]);
   }
-  if( FULL )fill_in_2D();
+
+  #ifdef MATRIX_2D
+  fill_in_2D();
+  #endif
 
   //gauss();
-  cout << "------" << endl;
   //descent();
-  cout << "------" << endl;
   gradient();
 
   return 0;
