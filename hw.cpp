@@ -24,7 +24,7 @@ typedef vector<ii> vii;
 #define MM(arr, num) memset((arr), (num), sizeof((arr)))
 #define DEB(x) cerr << ">>> " << (#x) << " -> " << (x) << endl;
 #define DEBA(x,n) cerr << (#x) << " "; deba((x),(n));
-void deba(double * a, int n){ cerr << "| "; REP(i,n) cerr << a[i] << " "; cerr << "|" << endl;}
+void deba( double * a, int n){ cerr << "| "; REP(i,n) cerr << a[i] << " "; cerr << "|" << endl;}
 
 
 inline bool EQ(double a, double b) { return fabs(a-b) < 1e-9; }
@@ -32,7 +32,10 @@ inline bool EQ(double a, double b) { return fabs(a-b) < 1e-9; }
 const int INF = 1<<30;
 typedef long long ll;
 typedef unsigned long long ull;
+//#define double long double
 /*******************************************************/
+
+const double EPS = 0.5;
 
 const int M = 2600000;
 const int N = 200000;
@@ -40,11 +43,11 @@ const int N = 200000;
 //const char FILE_A[] = "mat_cct_7650.txt";
 //const char FILE_B[] = "prava_str_cct_7650.txt";
 
-//const char FILE_A[] = "mat_ps_8200.txt";
-//const char FILE_B[] = "prava_str_ps_8200.txt";
+const char FILE_A[] = "mat_ps_8200.txt";
+const char FILE_B[] = "prava_str_ps_8200.txt";
 
-const char FILE_A[] = "smallA.txt";
-const char FILE_B[] = "smallB.txt";
+//const char FILE_A[] = "smallA.txt";
+//const char FILE_B[] = "smallB.txt";
 
 //const char FILE_A[] = "A.txt";
 //const char FILE_B[] = "B.txt";
@@ -58,9 +61,11 @@ int col[M];
 double b[N];
 double sol[N];
 double val[M];
+//double test[] = {0,1,0};
 
 double x[2][N]; //todo try [N][2]
 double r[2][N];
+double s[2][N];
 
 double ark[N];
 
@@ -70,8 +75,7 @@ double mat[N2D][N2D];
 void fill_in_2D(){
     if(n > N2D) { cout << "To big matrix" << endl; return; }
     REP(i,n)REP(j,n) mat[i][j] = 0;
-    REP(i, m) { mat[row[i]][col[i]] = val[i]; }
-    cout << "ok " << endl;
+    REP(i, m) { mat[row[i]][col[i]] = mat[col[i]][row[i]] = val[i]; }
 }
 
 void gauss(){
@@ -102,12 +106,9 @@ void gauss(){
 }
 
 
-
-
-
 inline void get_random_vec( double * r){
     REP(i,n) r[i] = rand() / (double)RAND_MAX;
-    DEBA(r,n);
+    //DEBA(r,n);
 }
 
 inline void vec_sub( double * r, double * a, double * b ){
@@ -144,6 +145,12 @@ inline double vec_size(double * a){
     return sqrt(ret);
 }
 
+inline double copy_vec( double * to, double * from){
+    REP(i,n) to[i] = from[i];
+}
+
+
+
 
 void descent_2D(){
 
@@ -176,7 +183,6 @@ void descent_2D(){
         if(rk_ark == 0){ cout << "Zero division" << endl;  exit(0);}
         alpha =  rk_rk / rk_ark;
 
-        //DEB(alpha)
 
         vec_add_mul( x[k1], x[k], r[k], alpha );
 
@@ -186,19 +192,81 @@ void descent_2D(){
 
         DEB( vec_size(r[k1] ) );
 
-        if( vec_size(r[k1] ) < 0.1 ) { break; }
+        /*usleep(100000);
+        vec_sub( s[0], test, x[k1]);
+        DEB( vec_size(s[0]));
+        */
+
+        if( vec_size(r[k1] ) < EPS ) { break; }
 
 
 
-        k  ^= 0;
+        k  ^= 1;
         k1 ^= 1;
     }
+
 
     DEBA( x[k1] ,n );
     mat_vec_mul( x[k], x[k1] );
     vec_sub( r[0], b, x[k] );
 
     cout << "error: " <<  vec_size(r[0]) << endl;
+
+}
+
+
+void gradient_2D(){
+
+    fill_in_2D();
+    get_random_vec( x[0] );
+
+    mat_vec_mul( r[0] , x[0] ); //r[0] is Ax0 here.
+    vec_sub(  r[0],  b,  r[0] );
+    copy_vec( s[0], r[0] );
+
+    //DEBA(r[0],n);
+
+    int k = 0, k1 = 1;
+    double alpha, beta, rk1_rk1, rk_rk, sk_ask;
+
+    while(1){
+
+        mat_vec_mul( ark, s[k] );  // ark is here ask
+
+        rk_rk = vec_mul( r[k], r[k] );
+        sk_ask = vec_mul( s[k], ark );
+        if(sk_ask == 0){ cout << "Zero division" << endl;  break;}
+        alpha =  rk_rk / sk_ask;
+
+        vec_add_mul( x[k1], x[k], s[k], alpha );
+        vec_sub_mul( r[k1], r[k], ark,  alpha );
+
+
+        DEB( vec_size(r[k1] ) );
+
+        if( vec_size(r[k1] ) < EPS ) { break; }
+        /*new part*/
+
+        rk1_rk1 = vec_mul( r[k1], r[k1] );
+        if(rk_rk == 0){ cout << "Zero division" << endl;  break;}
+        beta = rk1_rk1 / rk_rk;
+
+        DEB(beta)
+
+        vec_add_mul( s[k1], r[k1], s[k], beta );
+        /* */
+
+        k  ^= 1;
+        k1 ^= 1;
+    }
+
+
+    DEBA( x[k1] ,n );
+    mat_vec_mul( x[k], x[k1] );
+    vec_sub( r[0], b, x[k] );
+
+    cout << "error: " <<  vec_size(r[0]) << endl;
+
 
 }
 
@@ -227,8 +295,9 @@ int main() {
 
   //gauss();
   cout << "------" << endl;
-  descent_2D();
-
+  //descent_2D();
+  cout << "------" << endl;
+  gradient_2D();
 
   return 0;
 }
