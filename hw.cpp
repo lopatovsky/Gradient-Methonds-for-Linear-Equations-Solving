@@ -35,7 +35,9 @@ typedef unsigned long long ull;
 //#define double long double
 /*******************************************************/
 
-const double EPS = 0.5;
+const double EPS = 1e-8;
+
+const bool FULL = false;
 
 const int M = 2600000;
 const int N = 200000;
@@ -43,8 +45,14 @@ const int N = 200000;
 //const char FILE_A[] = "mat_cct_7650.txt";
 //const char FILE_B[] = "prava_str_cct_7650.txt";
 
-const char FILE_A[] = "mat_ps_8200.txt";
-const char FILE_B[] = "prava_str_ps_8200.txt";
+//const char FILE_A[] = "mat_ps_8200.txt";
+//const char FILE_B[] = "prava_str_ps_8200.txt";
+
+const char FILE_A[] = "mat_cct_120600.txt";
+const char FILE_B[] = "prava_str_cct_120600.txt";
+
+//const char FILE_A[] = "mat_ps_128800.txt";
+//const char FILE_B[] = "prava_str_ps_128800.txt";
 
 //const char FILE_A[] = "smallA.txt";
 //const char FILE_B[] = "smallB.txt";
@@ -110,14 +118,12 @@ inline void get_random_vec( double * r){
     REP(i,n) r[i] = rand() / (double)RAND_MAX;
     //DEBA(r,n);
 }
-
 inline void vec_sub( double * r, double * a, double * b ){
     REP(i,n) r[i] = a[i] - b[i];
 }
 inline void vec_add( double * r, double * a, double * b ){
     REP(i,n) r[i] = a[i] + b[i];
 }
-
 // a + c * b  -> c is const
 inline void vec_add_mul( double * r, double * a, double * b, double alpha_b ){
     REP(i,n) r[i] = a[i] + alpha_b * b[i];
@@ -127,15 +133,27 @@ inline void vec_sub_mul( double * r, double * a, double * b, double alpha_b ){
     REP(i,n) r[i] = a[i] - alpha_b * b[i];
 }
 
-inline void mat_vec_mul(  double * r, double * b){
+inline void mat_vec_mul_cr( double * r, double * b){
+    REP(i,n) r[i] = 0;
+    REP(i,m){
+        r[ row[i] ] += val[i] * b[ col[i] ];
+    }
+}
+inline void mat_vec_mul_full(  double * r, double * b){
     REP(i,n){
         r[i] = 0;
         REP(j,n) r[i] += mat[i][j] * b[j];
     }
 }
+
+inline void mat_vec_mul(  double * r, double * b){
+    if (FULL) mat_vec_mul_full(r,b);
+    else mat_vec_mul_cr(r,b);
+}
+
 inline double vec_mul( double * a, double * b ){
     double ret = 0;
-    REP(i,n) ret += a[i] * b[i];
+    REP(i,n){ ret += a[i] * b[i]; }
     return ret;
 }
 
@@ -152,9 +170,8 @@ inline double copy_vec( double * to, double * from){
 
 
 
-void descent_2D(){
+void descent(){
 
-    fill_in_2D();
     get_random_vec( x[0] );
     //x[0][0] = 0;
     //x[0][1] = 1;
@@ -215,9 +232,8 @@ void descent_2D(){
 }
 
 
-void gradient_2D(){
+void gradient(){
 
-    fill_in_2D();
     get_random_vec( x[0] );
 
     mat_vec_mul( r[0] , x[0] ); //r[0] is Ax0 here.
@@ -241,7 +257,6 @@ void gradient_2D(){
         vec_add_mul( x[k1], x[k], s[k], alpha );
         vec_sub_mul( r[k1], r[k], ark,  alpha );
 
-
         DEB( vec_size(r[k1] ) );
 
         if( vec_size(r[k1] ) < EPS ) { break; }
@@ -250,8 +265,6 @@ void gradient_2D(){
         rk1_rk1 = vec_mul( r[k1], r[k1] );
         if(rk_rk == 0){ cout << "Zero division" << endl;  break;}
         beta = rk1_rk1 / rk_rk;
-
-        DEB(beta)
 
         vec_add_mul( s[k1], r[k1], s[k], beta );
         /* */
@@ -274,7 +287,8 @@ void gradient_2D(){
 
 int main() {
 
-  srand( time(NULL) );
+  //srand( time(NULL) );
+  srand( 123 );
 
   FILE * fa = fopen(FILE_A,"r+");
   FILE * fb = fopen(FILE_B,"r+");
@@ -292,12 +306,13 @@ int main() {
   REP(i,n){
     fscanf(fb,"%lf", &b[i]);
   }
+  if( FULL )fill_in_2D();
 
   //gauss();
   cout << "------" << endl;
-  //descent_2D();
+  //descent();
   cout << "------" << endl;
-  gradient_2D();
+  gradient();
 
   return 0;
 }
