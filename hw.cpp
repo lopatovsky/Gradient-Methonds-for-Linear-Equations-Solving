@@ -45,22 +45,18 @@ typedef unsigned long long ull;
 
 /*******************************************************/
 
-const double EPS = 1e-8;
+const double EPS = 1e-6;
 
-//const char FILE_A[] = "mat_cct_7650.txt";
-//const char FILE_B[] = "prava_str_cct_7650.txt";
+//const char FILE_A[] = "mat_cct_7650.txt"; const char FILE_B[] = "prava_str_cct_7650.txt";
 
-//const char FILE_A[] = "mat_ps_8200.txt";
-//const char FILE_B[] = "prava_str_ps_8200.txt";
+const char FILE_A[] = "mat_ps_8200.txt"; const char FILE_B[] = "prava_str_ps_8200.txt";
 
-//const char FILE_A[] = "mat_cct_120600.txt";
-//const char FILE_B[] = "prava_str_cct_120600.txt";
+//const char FILE_A[] = "mat_cct_120600.txt"; const char FILE_B[] = "prava_str_cct_120600.txt";
 
-//const char FILE_A[] = "mat_ps_128800.txt";
-//const char FILE_B[] = "prava_str_ps_128800.txt";
+//const char FILE_A[] = "mat_ps_128800.txt"; const char FILE_B[] = "prava_str_ps_128800.txt";
 
-const char FILE_A[] = "smallA.txt";
-const char FILE_B[] = "smallB.txt";
+//const char FILE_A[] = "smallA.txt";
+//const char FILE_B[] = "smallB.txt";
 
 //const char FILE_A[] = "A.txt";
 //const char FILE_B[] = "B.txt";
@@ -119,7 +115,7 @@ void gauss(){
 
 
 inline void get_random_vec( double * r){
-    REP(i,n) r[i] = rand() / (double)RAND_MAX;
+    REP(i,n) r[i] = 0; // rand() / (double)RAND_MAX;
     //DEBA(r,n);
 }
 inline void vec_sub( double * r, double * a, double * b ){
@@ -169,6 +165,8 @@ inline double copy_vec( double * to, double * from){
 
 void descent(){
 
+    double bsize = vec_size( b );
+
     get_random_vec( x[0] );
     //x[0][0] = 0;
     //x[0][1] = 1;
@@ -184,6 +182,8 @@ void descent(){
 
     int k = 0, k1 = 1;
     double alpha, rk_rk, rk_ark;
+
+    int iter = 0;
 
     while(1){
 
@@ -204,14 +204,26 @@ void descent(){
 
         vec_sub_mul( r[k1], r[k], ark,  alpha );
 
-        DEB( vec_size(r[k1] ) );
+        #ifdef DEBUG
+        DEB(iter)
+        DEB( vec_size(r[k1] )  / bsize );
+
+        /*if(k == 0){
+        mat_vec_mul( x[k], x[k1] );
+        vec_sub( r[0], b, x[k] );
+
+
+        cout << iter << " error: " <<  vec_size(r[0]) << endl;
+        }*/
+
+        #endif
 
         /*usleep(100000);
         vec_sub( s[0], test, x[k1]);
-        DEB( vec_size(s[0]));
+        DEB( vec_size(s[0])/bsize  );
         */
-
-        if( vec_size(r[k1] ) < EPS ) { break; }
+        iter++;
+        if( vec_size(r[k1] )/ bsize < EPS ) { break; }
 
 
 
@@ -220,16 +232,22 @@ void descent(){
     }
 
 
+    #ifdef DEBUG
     DEBA( x[k1] ,n );
     mat_vec_mul( x[k], x[k1] );
     vec_sub( r[0], b, x[k] );
 
+    cout << "iter: " << iter << endl;
     cout << "error: " <<  vec_size(r[0]) << endl;
+    #endif
+
 
 }
 
 
 void gradient(){
+
+    double bsize = vec_size( b );
 
     get_random_vec( x[0] );
 
@@ -237,6 +255,11 @@ void gradient(){
 
     vec_sub(  r[0],  b,  r[0] );
     copy_vec( s[0], r[0] );
+
+
+
+    int iter = 0;
+
 
     //DEBA(r[0],n);
 
@@ -257,10 +280,12 @@ void gradient(){
         vec_sub_mul( r[k1], r[k], ark,  alpha );
 
         #ifdef DEBUG
-        DEB( vec_size(r[k1] ) );
+        DEB( vec_size(r[k1] )/ bsize );
         #endif
 
-        if( vec_size(r[k1] ) < EPS ) { break; }
+         iter++;
+
+        if( (vec_size(r[k1] )/ bsize < EPS)  ) { break; }
         /*new part*/
 
         rk1_rk1 = vec_mul( r[k1], r[k1] );
@@ -273,6 +298,8 @@ void gradient(){
         rk_rk = rk1_rk1;
         k  ^= 1;
         k1 ^= 1;
+
+
     }
 
     #ifdef DEBUG
@@ -282,6 +309,7 @@ void gradient(){
 
 
     cout << "error: " <<  vec_size(r[0]) << endl;
+    cout << "iter " << iter << endl;
     #endif
 
 }
@@ -307,8 +335,8 @@ void init_arrays(int N, int M){
 
 int main() {
 
-  //srand( time(NULL) );
-  srand( 123 );
+  srand( time(NULL) );
+  //srand( 42 );
 
   FILE * fa = fopen(FILE_A,"r+");
   FILE * fb = fopen(FILE_B,"r+");
@@ -341,8 +369,8 @@ int main() {
   #endif
 
   //gauss();
-  //descent();
-  gradient();
+  descent();
+  //gradient();
 
   return 0;
 }
